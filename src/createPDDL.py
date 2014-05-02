@@ -26,19 +26,19 @@ for line in lines:
     entries = re.split('\s+', line)
     for entry in entries:
         if entry != '':
-            print '{0} at ({1},{2})'.format(entry, row, col)
+            print '{0} at ({1},{2})'.format(entry, col, row)
             entry = entry.upper()
-            m = re.match('R(\d)', entry)
-            if entry == '1' or entry == 'X':
-                blocked.add((row, col))
+            m = re.match('(\d)', entry)
+            if entry == '#' or entry == 'X':
+                blocked.add((col, row))
             elif m:
-                robot[(row, col)] = 'robot-{}'.format(m.group(0))
+                robot[(col, row)] = 'robot-{}'.format(m.group(0))
             elif entry == 'O':
-                open.add((row, col))
+                open.add((col, row))
             elif entry == 'B':
-                box.add((row, col))
+                box.add((col, row))
             elif entry == 'E':
-                goal.add((row, col))
+                goal.add((col, row))
             else:
                 print 'Unknown: {}'.format(entry)
             col += 1
@@ -59,10 +59,10 @@ def printNonGoal(keys):
 def printMoves(keys):
     for key in keys:
         if not key in blocked:
-            up = (key[0]-1,key[1])
-            down = (key[0]+1, key[1])
-            left = (key[0], key[1]-1)
-            right = (key[0], key[1]+1)
+            up = (key[0],key[1]-1)
+            down = (key[0], key[1]+1)
+            left = (key[0]-1, key[1])
+            right = (key[0]+1, key[1])
             if (not up in blocked) and (up in positions):
                 out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-up)\n'.format(key, up))
             if (not down in blocked) and (down in positions):
@@ -72,7 +72,7 @@ def printMoves(keys):
             if (not right in blocked) and (right in positions):
                 out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-right)\n'.format(key, right))
 
-out.write("(define (problem p012-microban-sequential)\n  (:domain sokoban-sequential)\n  (:objects")
+out.write("(define (problem p012-microban-sequential)\n  (:domain sokoban-sequential)\n  (:objects\n")
 out.write("    dir-down - direction\n")
 out.write("    dir-left - direction\n")
 out.write("    dir-right - direction\n")

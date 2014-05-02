@@ -1,10 +1,7 @@
-1  1  1  1  1  1  1  1  1  1  1
-1  E  O  O  O  O  O  B  O  R2 1
-1  o  o  o  o  o  o  1  1  1  1
-1  1  o  B  o  o  o  o  o  R3 1
-1  E  1  O  1  1  1  o  o  o  1 
-1  O  B  O  1  E  1  o  o  o  1
-1  O  1  1  1  E  1  o  o  o  1
-1  R1 1  1  1  o  o  o  o  o  1
-1  O  1  1  1  o  o  B  o  o  1
-1  1  1  1  1  1  1  1  1  1  1
+E o o B o o 3 o
+2 o o o o o o o
+# o B o o B o o
+E # o # o o o 
+o B o # o o 
+o # # E o o 
+1 # # E o o 

@@ -24,8 +24,8 @@ UPPER_THRESH_GOAL = np.array([80,160,255])
 MIN_GOAL_AREA = 300
 
 #lower & upper threshold for obstacle points (hsv)
-LOWER_THRESH_OBS = np.array([90,70,120])
-UPPER_THRESH_OBS = np.array([120,150,255])
+LOWER_THRESH_OBS = np.array([120,40,100])
+UPPER_THRESH_OBS = np.array([180,140,255])
 #the minimum area that a connected component can be to be considered a goal
 MIN_OBS_AREA = 300
 
@@ -33,8 +33,8 @@ MIN_OBS_AREA = 300
 GRID_LAYOUT_FILE = "grid_layout.csv"
 
 #configuration for what to display
-DISP_BOX_MASK = True
-DISP_GOAL_MASK = False
+DISP_BOX_MASK = False
+DISP_GOAL_MASK = True
 DISP_OBS_MASK = False
 
 print "Starting up camera."
@@ -60,6 +60,7 @@ def snapshot(im):
 	'''saves the given image to disk with the timestamp as the name'''
 	t = str(int(time.time()))
 	cv2.imwrite("snapshots/"+t+".png",im)
+	print "Saved a snapshot: " + t + ".png"
 
 
 def center_mass(contour):
@@ -115,7 +116,7 @@ def get_coms(img, lower_thresh, upper_thresh, min_area, display, name):
 		  #draw a circle showing where the com is in the new image
 		  cv2.circle(maskimg,com,5,np.array([0,0,255]),-1)
 
-		cv2.imshow(name,maskimg)
+		cv2.imshow(name,cv2.flip(maskimg,-1))
 
 	return coms
 
@@ -201,12 +202,12 @@ def main():
 	#find & set the goal locations on the grid
 	set_goal_locations(grid)
 	print "Found goal locations: "
-	print grid.goal_points
+	print grid.get_goal_pts()
 
 	#find & set obstacle locations on the grid
 	set_obstacle_locations(grid)
 	print "Found obstacle locations: "
-	print grid.obs_points
+	print grid.get_obs_pts()
 
 	#main program loop
 	while True:
@@ -230,7 +231,8 @@ def main():
 			grid.set_boxes(box_pts)
 
 			#display color image
-			colorwgrid = grid.overlay_grid(image)			
+			colorwgrid = grid.overlay_grid(image)
+			colorwgrid = cv2.flip(colorwgrid,-1)			
 			cv2.imshow("color", colorwgrid)
 
 		#show the internal representation of the grid
@@ -242,6 +244,7 @@ def main():
 
 		#quit
 		if (cv2.waitKey(1) & 0xFF) == ord('q'):
+			print "Quitting..."
 			break
 
 	camera.release()

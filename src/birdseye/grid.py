@@ -3,6 +3,7 @@ import cv2
 import operator
 import csv
 import random
+import math
 
 #the number of grid cells in the x and y directions
 CELLS_X = 9
@@ -118,7 +119,7 @@ class Grid:
 						cv2.drawContours(self.grid_img,[poly],-1,np.array([0,77,255]))
 			self.grid_changed = False
 		
-		cv2.imshow("Grid",self.grid_img)
+		cv2.imshow("Grid",cv2.flip(self.grid_img,-1))
 
 	def set_boxes(self, points):
 		'''sets the box points'''
@@ -156,3 +157,16 @@ class Grid:
 				poly = self.grid_poly[y][x]
 				if cv2.pointPolygonTest(poly,point,False) >= 0:
 					return (x,y)
+
+	def get_box_pts(self):
+		return [self.flip_pt(pt) for pt in self.box_points]
+
+	def get_goal_pts(self):
+		return [self.flip_pt(pt) for pt in self.goal_points]
+
+	def get_obs_pts(self):
+		return [self.flip_pt(pt) for pt in self.obs_points]
+
+	def flip_pt(self,pt):
+		return ((np.absolute((self.cells_x-1)-pt[0])),pt[1])
+

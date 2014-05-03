@@ -8,17 +8,18 @@ import struct
 HOST = '10.0.0.31'
 PORT = 2005
 
-parser = {
-    'AC' : lambda (msg) : struct.unpack('3s', msg),
-    'SP' : lambda (msg) : struct.unpack('2shhhhhh??hhhhh2s', msg),
-    'DM' : lambda (msg) : struct.unpack('3s', msg)
-}
+
 
 class FlockBot():
 
     def __init__(self, host):
         self.host = host
         self.port = 2005
+        self.parser = {
+            'AC' : lambda (msg) : struct.unpack('=3s', msg),
+            'SP' : lambda (msg) : struct.unpack('=2shhhhhh??hhhhh2s', msg),
+            'DM' : lambda (msg) : struct.unpack('=3s', msg)
+        }
         
     def _connect(self, sock, send, recv):
         print 'Running!'
@@ -74,7 +75,7 @@ class FlockBot():
 
     def read(self):
         if not self.recv.empty():
-            return self.recv.get(True, 10)
+            return self.recv.get(False, 10)
         return None
         
     def registerSensors(self, rate):

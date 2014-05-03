@@ -1,5 +1,12 @@
+import Robot
+import Board
+
 if __name__ == "__main__":
-    robot = 1
+    board = Board()
+    robots = [Robot(x, board) for x in [1, 2, 3]]
+    
+    for r in robots:
+        r.connect()
     
     # get grid
     # get robot pos
@@ -11,3 +18,5 @@ if __name__ == "__main__":
     #   start timeout
     #   if timeout replan
     #   if precondition run step
+    
+    

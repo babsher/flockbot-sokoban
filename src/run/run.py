@@ -1,6 +1,7 @@
 from robot import Robot
 from board import Board
 import re
+import time
 
 robotId = [6]
 dirMap = {'dir-south': 'S', 'dir-north': 'N', 'dir-west': 'W', 'dir-east':'E'}
@@ -12,11 +13,9 @@ def getPlan(file):
     out = {}
     move = re.compile('\(move robot-(\d) pos-(\d)-(\d) pos-(\d)-(\d) (dir-\w+)\)')
     for line in open(file, 'r').readlines():
-        line = line.replace('(', '')
-        line = line.replace(')', '')
         m = move.match(line)
         if m:
-            out[m.group(0)] = ('move', getPos(m, 1, 2), getPos(m, 3, 4), m.group(5))
+            out[int(m.group(1))] = [('move', getPos(m, 2, 3), getPos(m, 4, 5), dirMap[m.group(6)])]
     return out
 
 if __name__ == "__main__":
@@ -26,6 +25,7 @@ if __name__ == "__main__":
     print 'Connecting to robots ', robotId
     for r in robots:
         r.connect()
+        r.testConnection()
     
     # get grid
     # get robot pos
@@ -43,13 +43,14 @@ if __name__ == "__main__":
             r.update()
             if r.actionComplete:
                 curr = plan[r.id][0]
+                print 'current move ', curr
                 if r.completed(curr):
-                   plan[r.id].remove(curr)
-                   curr = plan[r.id][0]
-                
+                    print 'Moving ', curr, ' competed'
+                    plan[r.id].remove(curr)
+                    curr = plan[r.id][0]
                 if 'move' == curr[0]:
                     r.move(curr[1], curr[2], curr[3])
-                    
+        time.sleep(1)
     
     #   check precondition of step
     #   start timeout

@@ -6,6 +6,10 @@ import struct
 
 HOST = '10.0.0.31'
 PORT = 2005
+DEBUG = False
+
+def getHex(msg):
+    return ':'.join(x.encode('hex') for x in msg)
 
 class FlockBot():
 
@@ -26,16 +30,22 @@ class FlockBot():
             ready = select([sock], [], [], 1)
             if ready[0]:
                 if length is None:
-                    length = struct.unpack('b', sock.recv(1))[0]
-                    print 'Got packet of {} bytes.'.format(length)
+                    d = sock.recv(1)
+                    length = struct.unpack('b', d[0])[0]
+                    if DEBUG:
+                        print 'Got packet of {} bytes.'.format(length)
+                    if len(d) > 1:
+                        msg = d[1:]
                 elif len(msg) < length:
                     chunk = sock.recv(length-len(msg))
                     print chunk
                     msg = msg + chunk
                 if len(msg) == length:
-                    print 'Message: {}'.format(repr(msg))
+                    if DEBUG:
+                        print 'Message: {}'.format(getHex(msg))
                     code = struct.unpack('2s', msg[:2])[0]
-                    print 'Got code: {}'.format(code)
+                    if DEBUG:
+                        print 'Got code: {}'.format(code)
                     msg = self.parser.get(code)(msg)
                     if msg:
                         recv.put(msg)
@@ -56,42 +66,49 @@ class FlockBot():
                 continue
             try:
                 sock.connect(sa)
+                sock.setblocking(0)
             except socket.error as msg:
                 sock.close()
                 sock = None
                 continue
             break
-        sock.setblocking(0)
-        self.recv = Queue(1024)
-        self.send = Queue(1024)
-        self.running = True
-        self.thread = thread.start_new_thread(self._connect, (sock, self.send, self.recv))
+        if not sock == None:
+            self.recv = Queue(1024)
+            self.send = Queue(1024)
+            self.running = True
+            self.thread = thread.start_new_thread(self._connect, (sock, self.send, self.recv))
+        else:
+            print msg
 
     def close(self):
         self.running = False
 
     def read(self):
         if not self.recv.empty():
-            return self.recv.get(False, 10)
+            return self.recv.get(False)
         return None
     
     def read_block(self):
         return self.recv.get(True, 30)
+    
+    def testConnection(self):
+        self.send.put('hello')
+        self.read_block()
         
     def registerSensors(self, rate):
-        msg = struct.pack('=b2si', 6, 'SS', rate)
+        msg = struct.pack('<b2si', 6, 'SS', rate)
         self.send.put(msg)
         
     def stopSensor(self):
-        msg = struct.pack('=b2s', 6, 'SF', rate)
+        msg = struct.pack('<b2s', 6, 'SF', rate)
         self.send.put(msg) 
         
     def closeClaw(self):
-        msg = struct.pack('=b2sb3s', 6, 'RT', 3, 'DGC')
+        msg = struct.pack('<b2sb3s', 6, 'RT', 3, 'DGC')
         self.send.put(msg)
     
     def openClaw(self):
-        msg = struct.pack('=b2sb3s', 6, 'RT', 3, 'DGO')
+        msg = struct.pack('<b2sb3s', 6, 'RT', 3, 'DGO')
         self.send.put(msg)
     '''
     Movement Functions
@@ -104,26 +121,29 @@ class FlockBot():
     Stop                2	S	T
     '''
     def moveSpeed(self, speed):
-        msg = struct.pack('=b2sb3sb', 7, 'RT', 4, 'DMS', speed)
+        msg = struct.pack('<b2sb3sb', 7, 'RT', 4, 'DMS', speed)
         self.send.put(msg)
     
     def moveDistance(self, speed, dist):
-        msg = struct.pack('=b2sb3sbB', 8, 'RT', 5, 'DMS', speed, dist)
+        msg = struct.pack('<b2sb3sbb', 8, 'RT', 5, 'DMD', speed, dist)
+        if DEBUG:
+            print 'sending move: {} '.format(getHex(msg))
         self.send.put(msg)
         
     def moveWheels(self, left, right):
-        msg = struct.pack('=b2sb3sbb', 8, 'RT', 5, 'DMW', left, right)
+        msg = struct.pack('<b2sb3sbb', 8, 'RT', 5, 'DMW', left, right)
         self.send.put(msg)
         
     def rotate(self, speed):
-        msg = struct.pack('=b2sb3sb', 7, 'RT', 4, 'DRC', speed)
+        msg = struct.pack('<b2sb3sb', 7, 'RT', 4, 'DRC', speed)
         self.sock.send(msg)
         
     def rotate(self, speed, deg):
-        msg = struct.pack('=b2sb3sbh', 9, 'RT', 6, 'DRD', speed, deg)
-        print repr(msg)
+        msg = struct.pack('<b2sb3sbh', 9, 'RT', 6, 'DRD', speed, deg)
+        if DEBUG:
+            print 'sending rot: {} '.format(':'.join(x.encode('hex') for x in msg))
         self.send.put(msg)
         
     def stop(self):
-        msg = struct.pack('=b2s', 2, 'ST')
+        msg = struct.pack('<b2s', 2, 'ST')
         self.send.put(msg)

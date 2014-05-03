@@ -1,6 +1,15 @@
 import Robot
 import Board
 
+def getPlan(file):
+    out = {}
+    for line in open(file, 'r').readlines():
+        line = line.replace('(', '')
+        line = line.replace(')', '')
+        l = line.split(' ')
+        
+    return out
+
 if __name__ == "__main__":
     board = Board()
     robots = [Robot(x, board) for x in [1, 2, 3]]

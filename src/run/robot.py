@@ -3,8 +3,8 @@ import struct
 import math
 
 rotSpeed = 10
-moveSpeed = 15
-calib = {1:20,2:20,6:2,9:20}
+moveSpeed = 10
+calib = {1:20, 2:20, 3:2, 5:5, 6:5, 9:20}
 directions = ['N', 'E', 'S', 'W']
 
 class Robot(FlockBot):

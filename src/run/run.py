@@ -5,7 +5,7 @@ import time
 import zerorpc
 
 PLAN = True
-robotId = [6]
+robotId = [3, 6]
 dirMap = {'dir-south': 'S', 'dir-north': 'N', 'dir-west': 'W', 'dir-east':'E'}
 
 def getPos(m, g1, g2):
@@ -16,8 +16,10 @@ def getPlan(file):
     for r in robotId:
         out[r] = []
     
+    #                    move robot to from dir
     move = re.compile('\(move robot-(\d) pos-(\d)-(\d) pos-(\d)-(\d) (dir-\w+)\)')
-    push = re.compile('\(push-to-(non)?goal robot-(\d) stone-\d+ pos-\d-\d pos-(\d)-(\d) pos-(\d)-(\d) (dir-\w+)\)')
+    #                    push-to-goal robot box  from to dir
+    push = re.compile('\(push-to-(non)?goal robot-(\d) stone-\d+ pos-(\d)-(\d) pos-(\d)-(\d) pos-(\d)-(\d) (dir-\w+)\)')
     for line in open(file, 'r').readlines():
         m = move.match(line)
         if m:

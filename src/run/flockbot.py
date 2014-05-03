@@ -6,7 +6,7 @@ import struct
 
 HOST = '10.0.0.31'
 PORT = 2005
-DEBUG = False
+DEBUG = True
 
 def getHex(msg):
     return ':'.join(x.encode('hex') for x in msg)
@@ -31,11 +31,12 @@ class FlockBot():
             if ready[0]:
                 if length is None:
                     d = sock.recv(1)
-                    length = struct.unpack('b', d[0])[0]
-                    if DEBUG:
-                        print 'Got packet of {} bytes.'.format(length)
-                    if len(d) > 1:
-                        msg = d[1:]
+                    if len(d) > 0:
+                        length = struct.unpack('b', d[0])[0]
+                        if DEBUG:
+                            print 'Got packet of {} bytes.'.format(length)
+                        if len(d) > 1:
+                            msg = d[1:]
                 elif len(msg) < length:
                     chunk = sock.recv(length-len(msg))
                     print chunk
@@ -89,7 +90,7 @@ class FlockBot():
         return None
     
     def read_block(self):
-        return self.recv.get(True, 30)
+        return self.recv.get(True, 99999)
     
     def testConnection(self):
         self.send.put('hello')
@@ -110,24 +111,15 @@ class FlockBot():
     def openClaw(self):
         msg = struct.pack('<b2sb3s', 6, 'RT', 3, 'DGO')
         self.send.put(msg)
-    '''
-    Movement Functions
-    Function            byte[0]	byte[1]	byte[2]	byte[3]	byte[4]	byte[5]	byte[6]	byte[7]	byte[8]	byte[9]
-    Move                7	R	T	4	D	M	S	<speed>(-100 to 100)
-    Move to Distance	8	R	T	5	D	M	D	<speed>(-100 to 100)	<dist> (0 to x meters)
-    Differential Wheels	8	R	T	5	D	M	W	<left speed>(-100 to 100)	<right speed> (-100 to 100)
-    Rotation            7	R	T	4	D	R	C	<speed> (-100 to 100)
-    Degree Rotation     9	R	T	6	D	R	D	<speed> (-100 to 100)	LSB <degree> (0 to 359)	MSB <degree> (0 to 359)
-    Stop                2	S	T
-    '''
+    
     def moveSpeed(self, speed):
-        msg = struct.pack('<b2sb3sb', 7, 'RT', 4, 'DMS', speed)
+        msg = struct.pack('=b2sb3sb', 7, 'RT', 4, 'DMS', speed)
         self.send.put(msg)
     
     def moveDistance(self, speed, dist):
-        msg = struct.pack('<b2sb3sbb', 8, 'RT', 5, 'DMD', speed, dist)
+        msg = struct.pack('<b2sb3sbH', 9, 'RT', 6, 'DMD', speed, dist)
         if DEBUG:
-            print 'sending move: {} '.format(getHex(msg))
+            print 'sending move: {} '.format(repr(msg))
         self.send.put(msg)
         
     def moveWheels(self, left, right):

@@ -17,11 +17,14 @@ def getPlan(file):
         out[r] = []
     
     move = re.compile('\(move robot-(\d) pos-(\d)-(\d) pos-(\d)-(\d) (dir-\w+)\)')
-    push = re.compile()
+    push = re.compile('\(push-to-(non)?goal robot-(\d) stone-\d+ pos-\d-\d pos-(\d)-(\d) pos-(\d)-(\d) (dir-\w+)\)')
     for line in open(file, 'r').readlines():
         m = move.match(line)
         if m:
             out[int(m.group(1))].append(('move', getPos(m, 2, 3), getPos(m, 4, 5), dirMap[m.group(6)]))
+        m = push.match(line)
+        if m:
+            out[int(m.group(2))].append(('push', getPos(m, 3, 4), getPos(m, 5, 6), dirMap[m.groupd()]))
     return out
 
 if __name__ == "__main__":

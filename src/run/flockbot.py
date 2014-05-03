@@ -36,7 +36,7 @@ class FlockBot():
                     print 'Message: {}'.format(repr(msg))
                     code = struct.unpack('2s', msg[:2])[0]
                     print 'Got code: {}'.format(code)
-                    msg = parser.get(code)(msg)
+                    msg = self.parser.get(code)(msg)
                     if msg:
                         recv.put(msg)
                     length = None
@@ -74,6 +74,9 @@ class FlockBot():
         if not self.recv.empty():
             return self.recv.get(False, 10)
         return None
+    
+    def read_block(self):
+        return self.recv.get(True, 30)
         
     def registerSensors(self, rate):
         msg = struct.pack('=b2si', 6, 'SS', rate)

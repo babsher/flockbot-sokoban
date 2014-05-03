@@ -4,7 +4,7 @@ import math
 
 rotSpeed = 10
 moveSpeed = 10
-calib = {1:100,2:100}
+calib = {1:100,2:100,9:100}
 directions = ['N', 'E', 'S', 'W']
 
 class Robot(FlockBot):

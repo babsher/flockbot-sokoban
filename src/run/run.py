@@ -2,7 +2,7 @@ from robot import Robot
 from board import Board
 import re
 
-robotId = [0]
+robotId = [6]
 dirMap = {'dir-south': 'S', 'dir-north': 'N', 'dir-west': 'W', 'dir-east':'E'}
 
 def getPos(m, g1, g2):
@@ -23,6 +23,7 @@ if __name__ == "__main__":
     board = Board()
     robots = [Robot(x, board) for x in robotId]
     
+    print 'Connecting to robots ', robotId
     for r in robots:
         r.connect()
     
@@ -49,8 +50,7 @@ if __name__ == "__main__":
                 if 'move' == curr[0]:
                     r.move(curr[1], curr[2], curr[3])
                     
-                
-            
+    
     #   check precondition of step
     #   start timeout
     #   if timeout replan

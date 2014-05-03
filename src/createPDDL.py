@@ -64,19 +64,19 @@ def printMoves(keys):
             left = (key[0]-1, key[1])
             right = (key[0]+1, key[1])
             if (not up in blocked) and (up in positions):
-                out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-up)\n'.format(key, up))
+                out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-north)\n'.format(key, up))
             if (not down in blocked) and (down in positions):
-                out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-down)\n'.format(key, down))
+                out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-south)\n'.format(key, down))
             if (not left in blocked) and (left in positions):
-                out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-left)\n'.format(key, left))
+                out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-west)\n'.format(key, left))
             if (not right in blocked) and (right in positions):
-                out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-right)\n'.format(key, right))
+                out.write('    (MOVE-DIR pos-{0[0]}-{0[1]} pos-{1[0]}-{1[1]} dir-east)\n'.format(key, right))
 
 out.write("(define (problem p012-microban-sequential)\n  (:domain sokoban-sequential)\n  (:objects\n")
-out.write("    dir-down - direction\n")
-out.write("    dir-left - direction\n")
-out.write("    dir-right - direction\n")
-out.write("    dir-up - direction\n")
+out.write("    dir-south - direction\n")
+out.write("    dir-east - direction\n")
+out.write("    dir-west - direction\n")
+out.write("    dir-north - direction\n")
 
 i = 0
 for r in robot.items():

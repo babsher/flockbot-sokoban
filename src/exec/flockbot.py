@@ -1,14 +1,11 @@
 from Queue import Queue
 import thread
-import time
 import socket
 from select import select
 import struct
 
 HOST = '10.0.0.31'
 PORT = 2005
-
-
 
 class FlockBot():
 

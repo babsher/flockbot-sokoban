@@ -61,7 +61,6 @@ class Grid:
 		self.miny = min(points, key=operator.itemgetter(1))[1]
 		self.maxy = max(points, key=operator.itemgetter(1))[1]
 
-
 	def get_points_from_file(self, filename):
 		'''gets the points from a file, converts them to ints, and returns the list'''
 		points = []

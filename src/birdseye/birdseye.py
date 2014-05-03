@@ -3,6 +3,11 @@ import numpy as np
 from grid import Grid
 import time
 import csv
+import zerorpc
+import threading
+import gevent
+from gevent import Greenlet
+from zerorpc import zmq
 
 #resolution of the camera image
 WIDTH = 640
@@ -34,8 +39,10 @@ GRID_LAYOUT_FILE = "grid_layout.csv"
 
 #configuration for what to display
 DISP_BOX_MASK = False
-DISP_GOAL_MASK = True
+DISP_GOAL_MASK = False
 DISP_OBS_MASK = False
+DISP_COLOR = True
+DISP_GRID = True
 
 print "Starting up camera."
 camera = cv2.VideoCapture(0)
@@ -88,7 +95,6 @@ def threshold(img, lower_thresh, upper_thresh):
 	mask = cv2.inRange(img, lower_thresh, upper_thresh)
 	return mask
 
-
 def get_coms(img, lower_thresh, upper_thresh, min_area, display, name):
 	'''gets the centers of mass of the objects it finds by thresholding'''
 
@@ -96,7 +102,7 @@ def get_coms(img, lower_thresh, upper_thresh, min_area, display, name):
 	mask = threshold(img, lower_thresh, upper_thresh)
 
 	#find contours
-	contours, hierarchy = cv2.findContours(mask, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+	contours, hierarchy = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
 	#get the large contours
 	large_contours = [contour for contour in contours if cv2.contourArea(contour) > min_area]
@@ -188,6 +194,45 @@ def set_obstacle_locations(grid):
 	   #update the grid
 	   grid.set_obs(obs_pts)
 
+def set_box_locations(grid, image = None):
+
+	if image == None:
+		success, image = get_image()
+
+	#blur the image
+	blurred = blur(image)
+
+	#convert to hsv color space
+	hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
+	
+	#get center of mass of boxes -----------------
+	box_coms = get_box_coms(hsv)
+
+	#see if/where the boxes are in the grid
+	box_pts = coms_in_grid(grid,box_coms)
+
+	#update the grid to reflect the found boxes
+	grid.set_boxes(box_pts)
+
+def setup_server(grid):
+	'''sets up the server for transmitting grid info'''
+
+	class BIServ(zerorpc.Server):
+		def get_box_pts(self):
+			return grid.get_box_pts()
+
+		def get_goal_pts(self):
+			return grid.get_goal_pts()
+
+		def get_obs_pts(self):
+			return grid.get_obs_pts()
+
+	srv = BIServ()
+	srv.bind("tcp://10.0.0.106:4242")
+	g = Greenlet(srv.run)
+	g.start()
+	return srv
+
 def main():
 
 	#print "Resolution: {}x{}.".format(int(camera.get(3)), int(camera.get(4)))
@@ -199,6 +244,9 @@ def main():
 	print "Initializing grid."
 	grid = Grid(GRID_LAYOUT_FILE)
 
+	#set up the server
+	srv = setup_server(grid)
+
 	#find & set the goal locations on the grid
 	set_goal_locations(grid)
 	print "Found goal locations: "
@@ -209,34 +257,25 @@ def main():
 	print "Found obstacle locations: "
 	print grid.get_obs_pts()
 
-	#main program loop
+	#main loop for getting box positions
 	while True:
-		
+
+		gevent.sleep(1)
+
 		success, image = get_image()
 		if success:
 
-			#blur the image
-			blurred = blur(image)
+			set_box_locations(grid, image)
 
-			#convert to hsv color space
-			hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
-			
-			#get center of mass of boxes -----------------
-			box_coms = get_box_coms(hsv)
-
-			#see if/where the boxes are in the grid
-			box_pts = coms_in_grid(grid,box_coms)
-
-			#update the grid to reflect the found boxes
-			grid.set_boxes(box_pts)
-
-			#display color image
-			colorwgrid = grid.overlay_grid(image)
-			colorwgrid = cv2.flip(colorwgrid,-1)			
-			cv2.imshow("color", colorwgrid)
+			if DISP_COLOR:
+			    #display color image
+			    colorwgrid = grid.overlay_grid(image)
+			    colorwgrid = cv2.flip(colorwgrid,-1)			
+			    cv2.imshow("color", colorwgrid)
 
 		#show the internal representation of the grid
-		grid.display_grid()
+		if DISP_GRID:
+			grid.display_grid()
 
 		#take a snapshot of the color image
 		if (cv2.waitKey(1) & 0xFF == ord('s')):
@@ -244,6 +283,7 @@ def main():
 
 		#quit
 		if (cv2.waitKey(1) & 0xFF) == ord('q'):
+			srv.close()
 			print "Quitting..."
 			break
 

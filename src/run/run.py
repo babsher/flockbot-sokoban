@@ -2,7 +2,9 @@ from robot import Robot
 from board import Board
 import re
 import time
+import zerorpc
 
+PLAN = True
 robotId = [6]
 dirMap = {'dir-south': 'S', 'dir-north': 'N', 'dir-west': 'W', 'dir-east':'E'}
 
@@ -11,11 +13,15 @@ def getPos(m, g1, g2):
 
 def getPlan(file):
     out = {}
+    for r in robotId:
+        out[r] = []
+    
     move = re.compile('\(move robot-(\d) pos-(\d)-(\d) pos-(\d)-(\d) (dir-\w+)\)')
+    push = re.compile()
     for line in open(file, 'r').readlines():
         m = move.match(line)
         if m:
-            out[int(m.group(1))] = [('move', getPos(m, 2, 3), getPos(m, 4, 5), dirMap[m.group(6)])]
+            out[int(m.group(1))].append(('move', getPos(m, 2, 3), getPos(m, 4, 5), dirMap[m.group(6)]))
     return out
 
 if __name__ == "__main__":
@@ -29,6 +35,8 @@ if __name__ == "__main__":
     
     # get grid
     # get robot pos
+    bird = zerorpc.Client()
+    bird.connect("tcp://10.0.0.106:4242")
     # plan
     
     # Select parts for this robot

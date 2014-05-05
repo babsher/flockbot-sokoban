@@ -28,6 +28,9 @@ class Grid:
 		#a list of grid spaces where there are obstacles
 		self.obs_points = []
 
+		#flockbot locations and orientations
+		self.flock_points = []
+
 		#img for displays
 		self.reset_display()
 
@@ -138,6 +141,12 @@ class Grid:
 			self.obs_points = points
 			self.grid_changed = True
 
+	def set_flocks(self, points):
+		'''sets the flockbot points'''
+		if points != self.flock_points:
+			self.flock_points = points
+			self.grid_changed = True
+
 	def in_grid(self,point):
 		'''given an x,y coordinate of a pixel, will return true if pixel is in the grid, false if not'''
 		x,y = point
@@ -165,6 +174,9 @@ class Grid:
 
 	def get_obs_pts(self):
 		return [self.flip_pt(pt) for pt in self.obs_points]
+
+	def get_flock_pts(self):
+		return [(self.flip_(pt),orientation) for pt,orientation in self.flock_points]
 
 	def flip_pt(self,pt):
 		return ((np.absolute((self.cells_x-1)-pt[0])),pt[1])

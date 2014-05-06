@@ -48,7 +48,8 @@ DISP_BOX_MASK = False
 DISP_GOAL_MASK = False
 DISP_OBS_MASK = False
 DISP_COLOR = True
-DISP_GRID = False
+DISP_GRID = True
+DISP_FLOCK = False
 
 print "Starting up camera."
 camera = cv2.VideoCapture(0)
@@ -255,6 +256,7 @@ def set_flock_locations(grid, hsv = None):
             if grid.in_grid(pcom):
 
                 orientation = np.degrees(np.arctan2(ccom[1]-pcom[1],ccom[0]-pcom[0]))
+                print (grid.where_in_grid(pcom),orientation)
                 flock_points.append((grid.where_in_grid(pcom),orientation))
 
                 if DISP_FLOCK:
@@ -328,7 +330,7 @@ def main():
 
             set_box_locations(grid, hsv)
 
-            set_flock_locations(grid, hsv)
+            #set_flock_locations(grid, hsv)
 
             #red_mask = threshold(hsv, LOWER_ORT_RIGHT, UPPER_ORT_RIGHT)
             #together = cv2.bitwise_or(blue_mask,red_mask)

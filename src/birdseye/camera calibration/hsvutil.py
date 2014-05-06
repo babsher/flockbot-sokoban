@@ -14,10 +14,8 @@ cv2.namedWindow('frame',cv2.CV_WINDOW_AUTOSIZE | cv2.WINDOW_OPENGL)
 # Make trackbars for thresholding  
 cv2.createTrackbar('LowerH','frame',0,180,nothing)
 cv2.createTrackbar('UpperH','frame',0,180,nothing)
-time.sleep(1)
 cv2.createTrackbar('LowerS','frame',100,255,nothing)
 cv2.createTrackbar('UpperS','frame',255,255,nothing)
-time.sleep(1)
 cv2.createTrackbar('LowerV','frame',100,255,nothing)
 cv2.createTrackbar('UpperV','frame',255,255,nothing)
 

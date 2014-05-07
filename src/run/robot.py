@@ -5,7 +5,7 @@ import math
 rotSpeed = 10
 moveSpeed = 10
 calib = {1:20, 2:20, 3:2, 5:5, 6:5, 9:20}
-directions = ['N', 'E', 'S', 'W']
+directions = ['n', 'e', 's', 'w']
 
 class Robot(FlockBot):
     
@@ -15,8 +15,8 @@ class Robot(FlockBot):
         self.id = number
         self.parser['LO'] = lambda (msg) : struct.unpack('=2sbbc', msg)
         self.actionComplete = True # TODO testing
-        self.foundSquare = True
-        self.pos = ((1,1), 'W') # TODO remove
+        self.foundSquare = False
+#        self.pos = ((1,1), 'W') # TODO remove
         
     def update(self):
         msg = self.read()
@@ -26,8 +26,7 @@ class Robot(FlockBot):
             elif msg[0] == 'LO':
                 self.foundSquare = True
                 self.pos = ((msg[1], msg[2]), msg[3])
-                sefl.board.setRobot(self.id, self.pos)
-            self.pos = ((0,1), 'W') # TODO remove
+                self.board.setRobot(self.id, self.pos)
             print self.actionComplete, self.foundSquare, msg
             msg = self.read()
                 
@@ -46,24 +45,40 @@ class Robot(FlockBot):
         else:
             print 'Preconditions not met for move'
     
-    def setDirection(self, dir):
-        self._checkAction('rotate')
-        cur = self.pos[1]
-        curIdx = directions.index(cur) + 1
-        nextIdx = directions.index(dir) + 1
+    def push(self, box, current, next, dir):
+        self.move(next, current, dir)
         
-        if curIdx - nextIdx == -1:
-            self.rotate(rotSpeed, -90)
-        elif curIdx - nextIdx == 1:
-            self.rotate(rotSpeed, 90)
-        elif math.fabs((curIdx - nextIdx)) == 2:
-            self.rotate(rotSpeed, 180)
-        elif math.fabs(curIdx - nextIdx) == 3:
-            self.rotate(rotSpeed, 90)
-        elif curIdx - nextIdx == 4:
-            self.rotate(rotSpeed, -90)
+    def getDegrees(self, dir):
+        cur = self.pos[1]
+        curIdx = 2
+        nextIdx = None
+        
+        if cur == 'w':
+            nextIdx = ['s', 'w', 'n', 'e'].index(dir) + 1
+        elif cur == 'n':
+            nextIdx = ['w', 'n', 'e', 's'].index(dir) + 1
+        elif cur == 's':
+            nextIdx = ['e', 's', 'w', 'n'].index(dir) + 1
+        elif cur == 'e':
+            nextIdx = ['n', 'e', 's', 'w'].index(dir) + 1
+        
+        n = nextIdx - curIdx
+        if n == -1:
+            return -90
+        elif n == 1:
+            return 90
+        elif n == 2:
+            return 180
+        elif n == 0:
+            return 0
         else:
             print 'Unknown ', curIdx, nextIdx, (curIdx - nextIdx)
+        return None
+        
+    def setDirection(self, dir):
+        self._checkAction('rotate')
+        deg = self.getDegrees(dir)
+        self.rotate(rotSpeed, deg)
             
     def forward(self):
         self._checkAction('move forward')
@@ -73,4 +88,4 @@ class Robot(FlockBot):
         if not self.actionComplete and not self.foundSquare:
             print "Cannot {}, other actions in progress".format(msg)
         self.actionComplete = False
-        self.foundSquare = True # TODO remove forced true
+        self.foundSquare = False # TODO remove forced true

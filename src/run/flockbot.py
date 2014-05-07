@@ -1,5 +1,5 @@
 from Queue import Queue
-import thread
+import threading
 import socket
 from select import select
 import struct
@@ -26,7 +26,7 @@ class FlockBot():
         print 'Running!'
         length = None
         msg = ''
-        while self.running:
+        while not self.stop.is_set():
             ready = select([sock], [], [], 1)
             if ready[0]:
                 if length is None:
@@ -76,13 +76,15 @@ class FlockBot():
         if not sock == None:
             self.recv = Queue(1024)
             self.send = Queue(1024)
-            self.running = True
-            self.thread = thread.start_new_thread(self._connect, (sock, self.send, self.recv))
+            self.stop = threading.Event()
+            self.thread = threading.Thread(target=self._connect, args=(sock, self.send, self.recv))
+            self.thread.start()
         else:
             print msg
 
     def close(self):
-        self.running = False
+        self.stop.set()
+        self.thread.join()
 
     def read(self):
         if not self.recv.empty():

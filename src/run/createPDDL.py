@@ -52,8 +52,8 @@ def printLoc(keys, out):
 def printNonGoal(keys, out):
     printPat(keys, "    (IS-NONGOAL pos-{0[0]}-{0[1]})\n", out)
 
-def printMoves(keys, out):
-    for key in keys:
+def printMoves(positions, blocked, out):
+    for key in positions:
         if not key in blocked:
             up = (key[0],key[1]-1)
             down = (key[0], key[1]+1)
@@ -91,7 +91,7 @@ def makePDDL(positions, robot, blocked, box, goal):
     printPat(goal, "    (IS-GOAL pos-{0[0]}-{0[1]})\n", out)
     printNonGoal(positions - goal, out)
 
-    printMoves(positions, out)
+    printMoves(positions, blocked, out)
 
     i = 0
     for b in box:

@@ -55,8 +55,8 @@ def printNonGoal(keys, out):
 def printMoves(positions, blocked, out):
     for key in positions:
         if not key in blocked:
-            up = (key[0],key[1]-1)
-            down = (key[0], key[1]+1)
+            up = (key[0],key[1]+1)
+            down = (key[0], key[1]-1)
             left = (key[0]-1, key[1])
             right = (key[0]+1, key[1])
             if (not up in blocked) and (up in positions):
@@ -84,12 +84,12 @@ def makePDDL(positions, robot, blocked, box, goal):
         i = i + 1
         out.append("    stone-{:0>2} - stone\n".format(i))
 
-    printLoc(positions - blocked, out)
+    printLoc(positions, out)
 
     out.append("  )  \n(:init\n")
 
     printPat(goal, "    (IS-GOAL pos-{0[0]}-{0[1]})\n", out)
-    printNonGoal(positions - goal - blocked, out)
+    printNonGoal(positions - goal, out)
 
     printMoves(positions, blocked, out)
 

@@ -89,7 +89,7 @@ def makePDDL(positions, robot, blocked, box, goal):
     out.append("  )  \n(:init\n")
 
     printPat(goal, "    (IS-GOAL pos-{0[0]}-{0[1]})\n", out)
-    printNonGoal(positions - goal, out)
+    printNonGoal(positions - goal - blocked, out)
 
     printMoves(positions, blocked, out)
 

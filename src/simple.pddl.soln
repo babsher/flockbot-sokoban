@@ -1,2 +1,1 @@
-(move robot-6 pos-1-1 pos-0-1 dir-west)
-(move robot-3 pos-1-1 pos-0-1 dir-west)
+(move robot-0 pos-1-1 pos-0-1 dir-west)

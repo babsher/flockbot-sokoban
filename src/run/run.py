@@ -3,11 +3,17 @@ from board import Board
 from createPDDL import *
 import re
 import time
-import zerorpc
 from sets import Set
 from subprocess import call
 
-PLAN = False
+BIRD_IP = "tcp://10.0.0.105:4242"
+
+MAX_X = 3
+MAX_Y = 1
+
+PLAN = True
+RUN_ROBOTS = False
+
 robotId = [0]
 dirMap = {'dir-south': 's', 'dir-north': 'n', 'dir-west': 'w', 'dir-east':'e'}
 
@@ -32,47 +38,28 @@ def getPlan(file):
             out[int(m.group(2))].append(('push', getPos(m, 3, 4), getPos(m, 5, 6), dirMap[m.groupd()]))
     return out
 
-def getTuple(list):
-    return  [(x[0],x[1]) for x in list]
-
-def getAllPositions():
-    positions = Set()
-    for x in xrange(0,9):
-        for y in xrange(0,8):
-            positions.add((x,y))
-    return positions
-            
-
 if __name__ == "__main__":
-    board = Board()
+    # get grid
+    board = Board(BIRD_IP, MAX_X, MAX_Y)
     robots = [Robot(x, board) for x in robotId]
     
-    # get grid
-    positions = getAllPositions()
-    robots = {}
-    # get robot pos
     if PLAN:
-        bird = zerorpc.Client()
-        bird.connect("tcp://10.0.0.105:4242")
-        blocked = Set(getTuple(bird.get_obs_pts()))
-        box = Set(getTuple(bird.get_box_pts()))
-        goal = Set(getTuple(bird.get_goal_pts()))
-
-        print blocked, box, goal
-
-    print 'Connecting to robots ', robotId
-    for r in robots:
-        r.connect()
-        r.testConnection()
-        while r.pos == None:
-            r.update()
-        robots[r.id] = r.pos
-        print 'Robot {} starting at {}'.format(r.id, r.pos)
+        board.update()
+    # get robot pos
+    if RUN_ROBOTS:
+        print 'Connecting to robots ', robotId
+        for r in robots:
+            r.connect()
+            r.testConnection()
+            while r.pos == None:
+                r.update()
+            robots[r.id] = r.pos
+            print 'Robot {} starting at {}'.format(r.id, r.pos)
     
     # plan
     if PLAN:
         # write problem
-        pddl = makePDDL(positions, robots, blocked, box, goal)
+        pddl = makePDDL(board.positions, board.robots, board.blocked, board.box, board.goal)
         f = open('problem.pddl', 'w')
         f.write(pddl)
         f.close()
@@ -84,7 +71,7 @@ if __name__ == "__main__":
     
 
     # while has steps not completed
-    done = False
+    done = not RUN_ROBOTS
     while not done:
         for r in robots:
             r.update()

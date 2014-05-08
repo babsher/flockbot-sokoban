@@ -5,14 +5,18 @@ import re
 import time
 from sets import Set
 from subprocess import call
+import threading
+import signal
 
-BIRD_IP = "tcp://10.0.0.105:4242"
+stop = threading.Event()
+
+BIRD_IP = "tcp://10.0.0.110:4242"
 
 MAX_X = 3
 MAX_Y = 1
 
-PLAN = True
-RUN_ROBOTS = False
+PLAN = False
+RUN_ROBOTS = True
 
 robotId = [0]
 dirMap = {'dir-south': 's', 'dir-north': 'n', 'dir-west': 'w', 'dir-east':'e'}
@@ -38,7 +42,7 @@ def getPlan(file):
             out[int(m.group(2))].append(('push', getPos(m, 3, 4), getPos(m, 5, 6), dirMap[m.groupd()]))
     return out
 
-if __name__ == "__main__":
+def mainLoop():
     # get grid
     board = Board(BIRD_IP, MAX_X, MAX_Y)
     robots = [Robot(x, board) for x in robotId]
@@ -53,7 +57,6 @@ if __name__ == "__main__":
             r.testConnection()
             while r.pos == None:
                 r.update()
-            robots[r.id] = r.pos
             print 'Robot {} starting at {}'.format(r.id, r.pos)
     
     # plan
@@ -71,27 +74,38 @@ if __name__ == "__main__":
     
 
     # while has steps not completed
-    done = not RUN_ROBOTS
-    while not done:
+    while not stop.is_set():
         for r in robots:
             r.update()
             if r.actionComplete:
-                curr = plan[r.id][0]
-                print 'current move ', curr
-                if r.completed(curr):
-                    print 'Moving ', curr, ' competed'
-                    plan[r.id].remove(curr)
+                if len(plan[r.id]) > 0:
                     curr = plan[r.id][0]
-                # Identify preconditions for this robots steps
-                if 'move' == curr[0]:
-                    r.move(curr[1], curr[2], curr[3])
-                elif 'push' == curr[0]:
-                    r.push(curr[1], curr[2], curr[3], curr[4])
+                    print 'current move ', curr
+                    if r.completed(curr):
+                        print 'Moving ', curr, ' competed'
+                        plan[r.id].remove(curr)
+                        curr = plan[r.id][0]
+                    # Identify preconditions for this robots steps
+                    if 'move' == curr[0]:
+                        r.move(curr[1], curr[2], curr[3])
+                    elif 'push' == curr[0]:
+                        r.push(curr[1], curr[2], curr[3], curr[4])
         time.sleep(1)
-    
     #   check precondition of step
     #   start timeout
     #   if timeout replan
     #   if precondition run step
-    
-    
+    for r in robots:
+        r.close()
+
+def onSignal():
+    stop.set()
+    print 'Trying to shutdown'
+
+if __name__ == "__main__":
+#    signal.signal(signal.SIGINT, onSignal)
+    t = threading.Thread(target=mainLoop)
+    t.start()
+    input("press any button to kill...")
+    onSignal()
+    t.join()

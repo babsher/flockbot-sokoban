@@ -34,6 +34,15 @@ class Board:
         box = Set(self.getTuple(bird.get_box_pts()))
         goal = Set(self.getTuple(bird.get_goal_pts()))
         return (blocked, box, goal)
+    
+    def getDir(self, deg):
+        if deg < 45 and deg > -45:
+            return 'w'
+        if deg < -45 and deg > -135:
+            return 's'
+        if deg > 45 and deg < 135:
+            return 'n'
+        return 'e'
         
     def update(self):
         (blocked, box, goal) = self.getUpdates()

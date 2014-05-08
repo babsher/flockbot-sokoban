@@ -16,7 +16,7 @@ MAX_X = 3
 MAX_Y = 1
 
 PLAN = False
-RUN_ROBOTS = True
+RUN_ROBOTS = False
 
 robotId = [0]
 dirMap = {'dir-south': 's', 'dir-north': 'n', 'dir-west': 'w', 'dir-east':'e'}
@@ -79,17 +79,11 @@ def mainLoop():
             r.update()
             if r.actionComplete:
                 if len(plan[r.id]) > 0:
-                    curr = plan[r.id][0]
-                    print 'current move ', curr
-                    if r.completed(curr):
+                    if r.completed(): # go to next move if robot is ready
+                        curr = plan[r.id].pop(0)
                         print 'Moving ', curr, ' competed'
-                        plan[r.id].remove(curr)
-                        curr = plan[r.id][0]
-                    # Identify preconditions for this robots steps
-                    if 'move' == curr[0]:
-                        r.move(curr[1], curr[2], curr[3])
-                    elif 'push' == curr[0]:
-                        r.push(curr[1], curr[2], curr[3], curr[4])
+                        r.do(curr)
+            r.run()
         time.sleep(1)
     #   check precondition of step
     #   start timeout
@@ -98,14 +92,10 @@ def mainLoop():
     for r in robots:
         r.close()
 
-def onSignal():
-    stop.set()
-    print 'Trying to shutdown'
-
 if __name__ == "__main__":
-#    signal.signal(signal.SIGINT, onSignal)
     t = threading.Thread(target=mainLoop)
     t.start()
-    input("press any button to kill...")
-    onSignal()
+    raw_input("press any button to kill...")
+    stop.set()
+    print 'Trying to shutdown'
     t.join()

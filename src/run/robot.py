@@ -4,7 +4,9 @@ import math
 
 rotSpeed = {0:20}
 moveSpeed = {0:20}
-calib = {0:37, 1:20, 2:20, 3:2, 5:5, 6:5, 9:20}
+moveDist = {0:37, 1:20, 2:20, 3:2, 5:5, 6:5, 9:20}
+fpushDist = {}
+bpushDist = {}
 directions = ['n', 'e', 's', 'w']
 
 class Robot(FlockBot):
@@ -14,23 +16,27 @@ class Robot(FlockBot):
         self.board = board
         self.id = number
         self.parser['LO'] = lambda (msg) : struct.unpack('=2sbbc', msg)
-        self.actionComplete = False # TODO testing
-        self.foundSquare = True
+        self.actionComplete = False
         self.pos = None
         self.pushState = 0
-#        self.pos = ((1,1), 'W') # TODO remove
+        self.action = None
         
+    def do(self, a):
+        self.action = a
+    
+    def run(self):
+        if 'move' == self.action[0]:
+            self.move()
+        elif 'push' == self.action[0]:
+            self.push()
+            
     def update(self):
-        self.pos = self.board.robots[self.id]
         msg = self.read()
         while not msg == None:
             if msg[0] == 'DMC':
                 self.actionComplete = True
-            elif msg[0] == 'LO':
-                self.foundSquare = True
-                self.pos = ((msg[1], msg[2]), msg[3])
-#                self.board.setRobot(self.id, self.pos)
-            print self.actionComplete, self.foundSquare, msg
+                self.pos = self.next_pos
+            print self.actionComplete,  msg
             msg = self.read()
 
     def completed(self, action):
@@ -39,14 +45,16 @@ class Robot(FlockBot):
         elif 'push' == action[0]:
             return self.pos[0] == action[2] and self.pushState == 1
                 
-    def move(self, current, next, dir):
+    def move(self):
+        (action, current, next, dir) = self.action
         print 'Moving to ', next, dir
         print 'At ', self.pos
         if self.pos[0] == current:
             if self.pos[1] == dir:
-                self._checkAction('move forward', 'move')
-                self.moveDistance(moveSpeed[self.id], calib[self.id])
+                if self._checkAction('move forward', 'move'):
+                    self.moveDistance(moveSpeed[self.id], calib[self.id])
             else:
+                self.next_pos = (self.pos[0], dir)
                 self.setDirection(dir)
         else:
             print 'Preconditions not met for move'
@@ -56,7 +64,8 @@ class Robot(FlockBot):
         print 'At ', self.pos
         if self.pos[0] == current:
             if self.pos[1] == dir and self.pushState == 0:
-                self.forward()
+                if self._checkAction('move forward', 'push'):
+                    self.moveDistance(moveSpeed[self.id], calib[self.id])
             else:
                 self.setDirection(dir)
         else:
@@ -95,7 +104,5 @@ class Robot(FlockBot):
         self.rotate(rotSpeed[self.id], deg)
         
     def _checkAction(self, msg, type):
-        if not self.actionComplete and not self.foundSquare:
-            print "Cannot {}, other actions in progress".format(msg)
-        self.actionComplete = False
-        self.foundSquare = True # TODO remove forced true
+        # TODO check next pos is open in board
+        return True

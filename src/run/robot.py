@@ -44,6 +44,17 @@ class Robot(FlockBot):
             return self.pos[0] == action[2]
         elif 'push' == action[0]:
             return self.pos[0] == action[2] and self.pushState == 1
+        
+    def compute_next_pos(self, dir):
+        loc = self.pos[0]
+        if dir == 'w':
+            return ((loc[0]-1, loc[1]), self.pos[1])
+        elif dir  == 'e':
+            return ((loc[0]+1, loc[1]), self.pos[1])
+        elif dir  == 'n':
+            return ((loc[0], loc[1]+1), self.pos[1])
+        elif dir  == 's':
+            return ((loc[0], loc[1]-1), self.pos[1])
                 
     def move(self):
         (action, current, next, dir) = self.action
@@ -52,6 +63,7 @@ class Robot(FlockBot):
         if self.pos[0] == current:
             if self.pos[1] == dir:
                 if self._checkAction('move forward', 'move'):
+                    self.next_pos = self.compute_next_pos(dir)
                     self.moveDistance(moveSpeed[self.id], calib[self.id])
             else:
                 self.next_pos = (self.pos[0], dir)
@@ -65,7 +77,11 @@ class Robot(FlockBot):
         if self.pos[0] == current:
             if self.pos[1] == dir and self.pushState == 0:
                 if self._checkAction('move forward', 'push'):
-                    self.moveDistance(moveSpeed[self.id], calib[self.id])
+                    self.next_pos = self.compute_next_pos(dir)
+                    self.moveDistance(moveSpeed[self.id], fpushDist[self.id])
+                    self.pushState = 1
+            elif self.pushState == 1:
+                self.moveDistance(-1*moveSpeed[self.id], bpushDist[self.id])
             else:
                 self.setDirection(dir)
         else:

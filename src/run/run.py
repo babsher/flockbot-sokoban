@@ -69,7 +69,11 @@ def mainLoop():
         call(['/usr/local/bin/python3', './src/pyperplan.py', './domain.pddl', './problem.pddl'])
     
     # Select parts for this robot
-    plan = getPlan('./src/simple.pddl.soln')
+    plan = {}
+    if PLAN:
+        plan = getPlan('./problem.pddl.soln')
+    else:
+        plan =  getPlan('./src/simple.pddl.soln')
     print plan
     
 

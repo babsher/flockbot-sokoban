@@ -2,12 +2,12 @@ from flockbot import FlockBot
 import struct
 import math
 
-rotSpeed = {0:15}
-moveSpeed = {0:20}
-moveDist = {0:30, 1:30, 2:30, 3:30, 5:30, 6:30, 9:30}
-fpushDist = {0:45}
-bpushDist = {0:7}
-initPos = {0:((8,3),'n')}
+rotSpeed = {0:15, 8:15}
+moveSpeed = {0:20, 8:21}
+moveDist = {0:30, 1:30, 2:30, 3:30, 5:30, 6:30, 8:30}
+fpushDist = {0:40, 8:40}
+bpushDist = {0:10, 8:10}
+initPos = {0:((0,0),'n'), 8:((2,3),'s')}
 directions = ['n', 'e', 's', 'w']
 
 class Robot(FlockBot):
@@ -23,7 +23,7 @@ class Robot(FlockBot):
         self.action = None
         
     def do(self, a):
-        print 'Doing ', a
+        print 'R-', self.id, ' Doing ', a
         self.action = a
     
     def run(self):
@@ -33,7 +33,6 @@ class Robot(FlockBot):
                     self.move()
                 elif 'push' == self.action[0]:
                     self.push()
-                self.actionComplete = False
             
     def update(self):
         self.board.setRobot(self.id, self.pos)
@@ -50,7 +49,12 @@ class Robot(FlockBot):
             if 'move' == self.action[0]:
                 return self.pos[0] == self.action[2]
             elif 'push' == self.action[0]:
-                return self.pos[0] == self.action[2] and self.pushState == 1
+                if self.pos[0] == self.action[2] and self.pushState == 2:
+                    self.pushState = 0
+                    self.action = None
+                    return True
+                else:
+                    return False
         return True
         
     def compute_next_pos(self, dir):
@@ -79,19 +83,23 @@ class Robot(FlockBot):
         else:
             print 'Preconditions not met for move'
     
-    def push(self, box, current, next, dir):
-        print 'pushing to ', next, dir
+    def push(self):
+        (action, current, next, dir) = self.action
+        print 'pushing to ', next, dir, self.pushState
         print 'At ', self.pos
         if self.pos[0] == current:
             if self.pos[1] == dir and self.pushState == 0:
-                if self._checkAction('move forward', 'push'):
+                if self._checkAction('push box', 'push'):
                     self.next_pos = self.compute_next_pos(dir)
                     self.moveDistance(moveSpeed[self.id], fpushDist[self.id])
                     self.pushState = 1
-            elif self.pushState == 1:
-                self.moveDistance(-1*moveSpeed[self.id], bpushDist[self.id])
             else:
+                self.next_pos = (self.pos[0], dir)
                 self.setDirection(dir)
+        elif self.pushState == 1:
+            self.pushState = 2
+            self.board.pushBox(next, dir)
+            self.moveDistance(-1*moveSpeed[self.id], bpushDist[self.id])
         else:
             print 'Preconditions not met for move'
         
@@ -111,9 +119,9 @@ class Robot(FlockBot):
         
         n = nextIdx - curIdx
         if n == -1:
-            return -90
-        elif n == 1:
             return 90
+        elif n == 1:
+            return 275
         elif n == 2:
             return 180
         elif n == 0:
@@ -123,10 +131,20 @@ class Robot(FlockBot):
         return None
         
     def setDirection(self, dir):
+        self.actionComplete = False
         deg = self.getDegrees(dir)
+        print 'R-', self.id, ' rotating ', deg
         self.rotate(rotSpeed[self.id], deg)
         
     def _checkAction(self, msg, type):
-        # TODO check next pos is open in board
-        self.actionComplete = False
-        return True
+        if type == 'move':
+            if self.board.isOpen(self.action[2]):
+                self.actionComplete = False
+                return True
+        elif type == 'push':
+            print self.action, ' in ', self.board.box
+            if type == 'push' and not self.action[2] in self.board.box:
+                print 'next space no box'
+                return False
+            self.actionComplete = False
+            return True

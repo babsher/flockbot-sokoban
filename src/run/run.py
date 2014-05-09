@@ -15,10 +15,10 @@ BIRD_IP = "tcp://10.0.0.104:4242"
 MAX_X = 3
 MAX_Y = 2
 
-PLAN = True
+PLAN = False
 RUN_ROBOTS = True
 
-robotId = [0]
+robotId = [0, 8]
 dirMap = {'dir-south': 's', 'dir-north': 'n', 'dir-west': 'w', 'dir-east':'e'}
 
 def getPos(m, g1, g2):
@@ -39,7 +39,7 @@ def getPlan(file):
             out[int(m.group(1))].append(('move', getPos(m, 2, 3), getPos(m, 4, 5), dirMap[m.group(6)]))
         m = push.match(line)
         if m:
-            out[int(m.group(2))].append(('push', getPos(m, 3, 4), getPos(m, 5, 6), dirMap[m.groupd()]))
+            out[int(m.group(2))].append(('push', getPos(m, 3, 4), getPos(m, 5, 6), dirMap[m.group(9)]))
     return out
 
 def mainLoop(event):
@@ -73,7 +73,7 @@ def mainLoop(event):
         if PLAN:
             plan = getPlan('./problem.pddl.soln')
         else:
-            plan =  getPlan('./src/simple.pddl.soln')
+            plan =  getPlan('./src/ma_1.pddl.soln')
         print plan
 
         # while has steps not completed
@@ -81,11 +81,11 @@ def mainLoop(event):
             for r in robots:
                 r.update()
                 if r.actionComplete:
-                    if len(plan[r.id]) > 0:
-                        if r.completed(): # go to next move if robot is ready
-                            curr = plan[r.id].pop(0)
-                            print 'Moving ', curr, ' competed'
-                            r.do(curr)
+                    if r.completed(): # go to next move if robot is ready
+                        if len(plan[r.id]) > 0:
+                                curr = plan[r.id].pop(0)
+                                print 'Moving ', curr
+                                r.do(curr)
                 r.run()
             time.sleep(1)
         #   check precondition of step

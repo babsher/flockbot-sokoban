@@ -8,8 +8,12 @@ class Board:
         self.robots = {}
         self.blocked = Set()
         self.box = Set()
+        self.box.add((1,1))
         self.goal = Set()
         self.positions = self.getAllPositions(x,y)
+    
+    def isOpen(self, loc):
+        return loc in self.positions - self.blocked - self.box - Set(self.robots.values())
     
     def getAllPositions(self, MAX_X, MAX_Y):
         positions = Set()
@@ -23,6 +27,19 @@ class Board:
     
     def setRobot(self, r, pos):
         self.robots[r] = pos
+        
+    def pushBox(self, block, dir):
+        print 'Boxes ', self.box
+        self.box.remove(block)
+        if dir == 'w':
+            self.box.add((block[0]-1, block[1]))
+        elif dir == 'e':
+            self.box.add((block[0]+1, block[1]))
+        elif dir == 'n':
+            self.box.add((block[0], block[1]+1))
+        elif dir == 's':
+            self.box.add((block[0], block[1]-1))
+        print 'After push Boxes', self.box
     
     def setBlocks(self, blocks):
         self.blocks = blocks

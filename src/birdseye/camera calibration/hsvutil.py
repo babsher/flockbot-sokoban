@@ -48,7 +48,7 @@ while True:
     res = cv2.bitwise_and(frame,frame, mask= mask)
 
     # Display the resulting frame
-    cv2.imshow('frame',cv2.flip(res,-1))
+    cv2.imshow('frame',cv2.flip(mask,-1))
 
     # Press q to quit
     if cv2.waitKey(3) & 0xFF == ord('q'):

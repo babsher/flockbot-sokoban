@@ -10,7 +10,7 @@ import gevent
 from gevent import Greenlet
 from zerorpc import zmq
 
-SERVER_ON = False
+SERVER_ON = True
 
 #resolution of the camera image
 WIDTH = 640
@@ -26,8 +26,8 @@ UPPER_THRESH_BOX = np.array([25,150,255])
 MIN_BOX_AREA = 300
 
 #lower & upper threshold for goal points (hsv)
-LOWER_THRESH_GOAL = np.array([40,100,120])
-UPPER_THRESH_GOAL = np.array([80,160,255])
+LOWER_THRESH_GOAL = np.array([35,100,120])
+UPPER_THRESH_GOAL = np.array([85,160,255])
 #the minimum area that a connected component can be to be considered a goal
 MIN_GOAL_AREA = 300
 
@@ -37,8 +37,11 @@ UPPER_THRESH_OBS = np.array([180,140,255])
 #the minimum area that a connected component can be to be considered a goal
 MIN_OBS_AREA = 300
 
-LOWER_THRESH_FLOCK = np.array([90,70,200])
-UPPER_THRESH_FLOCK = np.array([135,190,255])
+LOWER_THRESH_FLOCK1 = np.array([90,60,180])
+UPPER_THRESH_FLOCK1 = np.array([135,190,255])
+
+LOWER_THRESH_FLOCK2 = np.array([20,16,255])
+UPPER_THRESH_FLOCK2 = np.array([46,70,255])
 
 #the file containing the grid layout
 GRID_LAYOUT_FILE = "grid_layout.csv"
@@ -154,7 +157,9 @@ def coms_in_grid(grid, coms):
     pts = []
     for com in coms:
         if grid.in_grid(com):
-            pts.append(grid.where_in_grid(com))
+            grid_pt = grid.where_in_grid(com)
+            if grid_pt != None:
+                pts.append(grid_pt)
     return pts
 
 def set_goal_locations(grid):
@@ -221,7 +226,7 @@ def set_box_locations(grid, hsv = None):
     #update the grid to reflect the found boxes
     grid.set_boxes(box_pts)
 
-def set_flock_locations(grid, hsv = None):
+def get_flock_location(grid, hsv, lower_thresh, upper_thresh,name):
 
     if hsv == None:
         success, image = get_image()
@@ -232,7 +237,7 @@ def set_flock_locations(grid, hsv = None):
         #convert to hsv color space
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-    mask = threshold(hsv, LOWER_THRESH_FLOCK, UPPER_THRESH_FLOCK)
+    mask = threshold(hsv, lower_thresh, upper_thresh)
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
     if hierarchy != None:
         hierarchy = hierarchy[0]
@@ -255,8 +260,8 @@ def set_flock_locations(grid, hsv = None):
         for pcom, ccom in p_c_coms:
             if grid.in_grid(pcom):
 
-                orientation = np.degrees(np.arctan2(ccom[1]-pcom[1],ccom[0]-pcom[0]))
-                print (grid.where_in_grid(pcom),orientation)
+                orientation = int(np.degrees(np.arctan2(ccom[1]-pcom[1],ccom[0]-pcom[0])))
+                #print (grid.where_in_grid(pcom),orientation)
                 flock_points.append((grid.where_in_grid(pcom),orientation))
 
                 if DISP_FLOCK:
@@ -264,10 +269,25 @@ def set_flock_locations(grid, hsv = None):
                     cv2.circle(maskimg,ccom,3,np.array([0,0,255]),-1)
 
         if DISP_FLOCK:
-            cv2.imshow('Flockbots', cv2.flip(maskimg,-1))
+            cv2.imshow(name, cv2.flip(maskimg,-1))
 
-        grid.set_flocks(flock_points)
+        return flock_points
 
+def set_flock1_location(grid, hsv = None):
+
+    flock1_locations = get_flock_location(grid, hsv, LOWER_THRESH_FLOCK1, UPPER_THRESH_FLOCK1, "Flock1")
+    if flock1_locations == [] or flock1_locations == None:
+        grid.set_flock1([])
+    else:
+        grid.set_flock1(flock1_locations[0])
+
+def set_flock2_location(grid, hsv = None):
+
+    flock2_locations = get_flock_location(grid, hsv, LOWER_THRESH_FLOCK2, UPPER_THRESH_FLOCK2, "Flock2")
+    if flock2_locations == [] or flock2_locations == None:
+        grid.set_flock2([])
+    else:
+        grid.set_flock2(flock2_locations[0])
 
 def setup_server(grid):
     '''sets up the server for transmitting grid info'''
@@ -281,6 +301,15 @@ def setup_server(grid):
 
         def get_obs_pts(self):
             return grid.get_obs_pts()
+
+        def get_flock_pts(self):
+            return grid.get_flock_pts()
+
+        def get_flock1(self):
+            return grid.get_flock1()
+
+        def get_flock2(self):
+            return grid.get_flock2()
 
     srv = BIServ()
     srv.bind("tcp://0.0.0.0:4242")
@@ -299,10 +328,6 @@ def main():
     print "Initializing grid."
     grid = Grid(GRID_LAYOUT_FILE)
 
-    #set up the server
-    if SERVER_ON:
-       srv = setup_server(grid)
-
     #find & set the goal locations on the grid
     set_goal_locations(grid)
     print "Found goal locations: "
@@ -313,11 +338,15 @@ def main():
     print "Found obstacle locations: "
     print grid.get_obs_pts()
 
+    #set up the server
+    if SERVER_ON:
+       srv = setup_server(grid)
+
     #main loop for getting box positions
     while True:
 
         if SERVER_ON:
-          gevent.sleep(.001)
+            gevent.sleep(.01)
 
         success, image = get_image()
         if success:
@@ -330,7 +359,8 @@ def main():
 
             set_box_locations(grid, hsv)
 
-            #set_flock_locations(grid, hsv)
+            #set_flock1_location(grid, hsv)
+            # set_flock2_location(grid, hsv)
 
             #red_mask = threshold(hsv, LOWER_ORT_RIGHT, UPPER_ORT_RIGHT)
             #together = cv2.bitwise_or(blue_mask,red_mask)
@@ -343,11 +373,15 @@ def main():
 
         #show the internal representation of the grid
         if DISP_GRID:
-            grid.display_grid()
+            grid_img = grid.display_grid()
 
         #take a snapshot of the color image
         if (cv2.waitKey(1) & 0xFF == ord('s')):
-            snapshot(image)
+            snapshot(colorwgrid)
+
+        #take a snapshot of the grid image
+        if (cv2.waitKey(1) & 0xFF == ord('g')):
+            snapshot(grid_img)
 
         #quit
         if (cv2.waitKey(1) & 0xFF) == ord('q'):

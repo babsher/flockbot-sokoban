@@ -30,6 +30,8 @@ class Grid:
 
 		#flockbot locations and orientations
 		self.flock_points = []
+		self.flock1 = []
+		self.flock2 = []
 
 		#img for displays
 		self.reset_display()
@@ -117,11 +119,17 @@ class Grid:
 						cv2.drawContours(self.grid_img,[poly],-1,np.array([0,255,0]),-1)
 					elif (x,y) in self.obs_points:
 						cv2.drawContours(self.grid_img,[poly],-1,np.array([0,0,255]),-1)
+					elif self.flock1 != [] and (x,y) == self.flock1[0]:
+						cv2.drawContours(self.grid_img,[poly],-1,np.array([170,90,0]),-1)
+					elif self.flock2 != [] and (x,y) == self.flock2[0]:
+						cv2.drawContours(self.grid_img,[poly],-1,np.array([30,150,250]),-1)	
 					else:
 						cv2.drawContours(self.grid_img,[poly],-1,np.array([0,77,255]))
 			self.grid_changed = False
 		
-		cv2.imshow("Grid",cv2.flip(self.grid_img,-1))
+		gridimg = cv2.flip(self.grid_img,-1)
+		cv2.imshow("Grid",gridimg)
+		return gridimg
 
 	def set_boxes(self, points):
 		'''sets the box points'''
@@ -145,6 +153,16 @@ class Grid:
 		'''sets the flockbot points'''
 		if points != self.flock_points:
 			self.flock_points = points
+			self.grid_changed = True
+
+	def set_flock1(self, point):
+		if point != self.flock1:
+			self.flock1 = point
+			self.grid_changed = True
+
+	def set_flock2(self, point):
+		if point != self.flock2:
+			self.flock2 = point
 			self.grid_changed = True
 
 	def in_grid(self,point):
@@ -176,7 +194,21 @@ class Grid:
 		return [self.flip_pt(pt) for pt in self.obs_points]
 
 	def get_flock_pts(self):
-		return [(self.flip_(pt),orientation) for pt,orientation in self.flock_points]
+		return [(self.flip_pt(pt),orientation) for pt,orientation in self.flock_points]
+
+	def get_flock1(self):
+		if self.flock1 != []:
+			pt, orientation = self.flock1
+			return (self.flip_pt(pt),orientation)
+		else:
+			return []
+
+	def get_flock2(self):
+		if self.flock2 != []:
+			pt, orientation = self.flock2
+			return (self.flip_pt(pt),orientation)
+		else:
+			return []
 
 	def flip_pt(self,pt):
 		return ((np.absolute((self.cells_x-1)-pt[0])),pt[1])

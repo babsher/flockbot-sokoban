@@ -46,6 +46,7 @@ SEARCHES = {
     'ehs': search.enforced_hillclimbing_search,
     'ids': search.iterative_deepening_search,
     'sat': search.sat_solve,
+    'ma' : search.ma_search,
 }
 
 
@@ -224,7 +225,7 @@ if __name__ == '__main__':
         default='bfs')
     args = argparser.parse_args()
 
-    logging.basicConfig(level=getattr(logging, args.loglevel.upper()),
+    logging.basicConfig(level=getattr(logging, 'DEBUG'),
                     format='%(asctime)s %(levelname)-8s %(message)s',
                     stream=sys.stdout)
 

@@ -21,9 +21,42 @@ Implements the A* (a-star) and weighted A* search algorithm.
 
 import heapq
 import logging
+import random
 
 from search import searchspace
 from task import Task
+from multiprocessing import Process, SimpleQueue
+import copy
+
+NUM_AGENTS = 3
+
+
+def search_helper(task, heuristic, plans, use_relaxed_plan):
+    random.shuffle(task.operators)
+    sol = astar_search(task, heuristic, ordered_node_greedy_best_first, use_relaxed_plan)
+    plans.put(sol)
+
+
+def ma_search(task, heuristic, use_relaxed_plan=False):
+    plans = SimpleQueue()
+    threads = []
+    for x in range(0, NUM_AGENTS):
+        t = Process(target=search_helper, args=(copy.deepcopy(task), heuristic, plans, use_relaxed_plan))
+        t.start()
+        threads.append(t)
+    print(len(threads))
+    for t in threads:
+        t.join()
+
+    sol = None
+    i = 0
+    while not plans.empty():
+        sol = plans.get()
+        logging.info('Plan length: %s' % len(sol))
+        _write_solution(sol, 'ma-R%s.sol' % i)
+        i += 1
+
+    return sol
 
 
 def ordered_node_astar(node, h, node_tiebreaker):
@@ -154,7 +187,7 @@ def astar_search(task, heuristic, make_open_entry=ordered_node_astar,
             rplan = None
             if use_relaxed_plan:
                 (rh, rplan) = heuristic.calc_h_with_plan(
-                                        searchspace.make_root_node(pop_state))
+                    searchspace.make_root_node(pop_state))
                 logging.debug("relaxed plan %s " % rplan)
 
             for op, succ_state in task.get_successor_states(pop_state):
@@ -187,3 +220,10 @@ def astar_search(task, heuristic, make_open_entry=ordered_node_astar,
     logging.info("No operators left. Task unsolvable.")
     logging.info("%d Nodes expanded" % expansions)
     return None
+
+
+def _write_solution(solution, filename):
+    assert solution is not None
+    with open(filename, 'w') as file:
+        for op in solution:
+            print(op.name, file=file)

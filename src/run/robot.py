@@ -2,12 +2,12 @@ from flockbot import FlockBot
 import struct
 import math
 
-rotSpeed = {0:15, 8:15}
-moveSpeed = {0:20, 8:21}
+rotSpeed = {0:15, 5:15, 8:15}
+moveSpeed = {0:20, 5:18, 8:21}
 moveDist = {0:30, 1:30, 2:30, 3:30, 5:30, 6:30, 8:30}
-fpushDist = {0:40, 8:40}
-bpushDist = {0:10, 8:10}
-initPos = {0:((0,0),'n'), 8:((2,3),'s')}
+fpushDist = {0:40, 5:40, 8:40}
+bpushDist = {0:10, 5:10, 8:10}
+initPos = {0:((0,0),'n'), 5:((3,3),'s')}
 directions = ['n', 'e', 's', 'w']
 
 class Robot(FlockBot):
@@ -41,6 +41,8 @@ class Robot(FlockBot):
             if msg[0] == 'DMC':
                 self.actionComplete = True
                 self.pos = self.next_pos
+                if 'push' == self.action[0] and self.pushState == 2:
+                    self.pushState = 3
             print self.actionComplete,  msg
             msg = self.read()
 
@@ -49,7 +51,7 @@ class Robot(FlockBot):
             if 'move' == self.action[0]:
                 return self.pos[0] == self.action[2]
             elif 'push' == self.action[0]:
-                if self.pos[0] == self.action[2] and self.pushState == 2:
+                if self.pos[0] == self.action[2] and self.pushState == 3:
                     self.pushState = 0
                     self.action = None
                     return True
@@ -88,14 +90,15 @@ class Robot(FlockBot):
         print 'pushing to ', next, dir, self.pushState
         print 'At ', self.pos
         if self.pos[0] == current:
-            if self.pos[1] == dir and self.pushState == 0:
+            if self.pushState == 0:
                 if self._checkAction('push box', 'push'):
-                    self.next_pos = self.compute_next_pos(dir)
-                    self.moveDistance(moveSpeed[self.id], fpushDist[self.id])
-                    self.pushState = 1
-            else:
-                self.next_pos = (self.pos[0], dir)
-                self.setDirection(dir)
+                    if self.pos[1] == dir:
+                        self.next_pos = self.compute_next_pos(dir)
+                        self.moveDistance(moveSpeed[self.id], fpushDist[self.id])
+                        self.pushState = 1
+                    else:
+                        self.next_pos = (self.pos[0], dir)
+                        self.setDirection(dir)
         elif self.pushState == 1:
             self.pushState = 2
             self.board.pushBox(next, dir)
@@ -121,7 +124,7 @@ class Robot(FlockBot):
         if n == -1:
             return 90
         elif n == 1:
-            return 275
+            return -90
         elif n == 2:
             return 180
         elif n == 0:
@@ -134,7 +137,10 @@ class Robot(FlockBot):
         self.actionComplete = False
         deg = self.getDegrees(dir)
         print 'R-', self.id, ' rotating ', deg
-        self.rotate(rotSpeed[self.id], deg)
+        if deg < 0:
+            self.rotate(-1*rotSpeed[self.id], -1*deg)
+        else:
+            self.rotate(rotSpeed[self.id], deg)
         
     def _checkAction(self, msg, type):
         if type == 'move':

@@ -133,7 +133,7 @@ class FlockBot():
         self.sock.send(msg)
         
     def rotate(self, speed, deg):
-        msg = struct.pack('<b2sb3sbh', 9, 'RT', 6, 'DRD', speed, deg)
+        msg = struct.pack('<b2sb3sbH', 9, 'RT', 6, 'DRD', speed, deg)
         if DEBUG:
             print 'sending rot: {} '.format(':'.join(x.encode('hex') for x in msg))
         self.send.put(msg)

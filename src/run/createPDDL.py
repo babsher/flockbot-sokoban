@@ -102,6 +102,7 @@ def makePDDL(positions, robot, blocked, box, goal):
         out.append("    (clear pos-{0[0]}-{0[1]})\n".format(p))
 
     for (k, r) in robot.items():
+        print k,r
         out.append("    (at {0} pos-{1[0]}-{1[1]})\n".format(r, k))
     
     out.append('  )\n  (:goal')

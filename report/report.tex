@@ -3,6 +3,9 @@
 \usepackage{microtype}
 \usepackage{cite}
 
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+
 \setlength\textwidth{7in} 
 \setlength\textheight{9.5in} 
 \setlength\oddsidemargin{-0.25in} 
@@ -33,6 +36,12 @@ Multi Robot Sokoban
 \author{
 {\bf Bryan Absher}\\
 babsher@gmu.edu
+\and
+{\bf Micheal Bowen}\\
+mbowen7@masonlive.gmu.edu
+\and
+{\bf Sam Gelman}\\
+sgelman@gmu.edu
 }
 
 \maketitle\
@@ -44,17 +53,50 @@ A really good abstract \cite{Botea2003}
 
 \end{abstract}
 
-\section{Introduction}
+\section*{Introduction}
 
-\section{Experiments}
+In robotics many situations arise where a robot is working with a group of its peers to modify it's envrionment to the benfit of the robots creators. Typical applications include automomous assembly, automated whearhousing and many others. 
 
-A number of methods and 
+\begin{figure}[h]
+% Define block styles
+\tikzstyle{block} = [rectangle, draw, fill=blue!14, 
+    text width=5em, text centered, rounded corners, minimum height=4em, node distance=3cm]
+\tikzstyle{line} = [draw, -latex']
+    
+\begin{tikzpicture}[ auto]
 
-\section{Discussion}
+    \node [block] (plan) {Planner};
+    \node [block, left of=plan] (bird) {Birdseye Camera};
+    \node [block, below of=plan] (exec) {Execution System};
+    \node [block, below of=exec] (flock) {Flock Bot\\ Rasberry Pi};
+    \node [block, left of=flock] (ard) {Arduino};
+    \node [block, right of=flock] (cam) {Flock Bot Camera};
+    \node [block, below of=ard] (motor) {Motors};
+    
+    \path [line] (bird) -- node {board} (plan);
+    \path [line] (bird) -- node {board} (exec);
+    \path [line] (plan) -- node {plan} (exec);
+    \path [line] (exec) -- node {commands} (flock);
+    \path [line] (flock) -- node {location} (exec);
+    \path [line] (cam) -- (flock);
+    \path [line] (flock) -- (ard);
+    \path [line] (ard) -- (motor);
+    \path [line] (motor) -- (ard);
+    
 
-\section{Conclusion}
+\end{tikzpicture}
+\caption{Diagram of Sokoban System.}
+\end{figure}
 
-\section{References}
+\section*{Experiments}
+
+During the course of implementing this system we experimented with a number of computer vision methods and localization methods. We used two types of cameras, one was on the flockbot the other was a birds eye camera. We tried a number of different lenses and cameras to ensure that we had the best view of the field and enough resolution such that the computer vision techniques could successully distinguish the different features of the game field.
+
+
+
+\section*{Discussion}
+
+\section*{Conclusion}
 
 \bibliographystyle{plain}
 \bibliography{report}{}

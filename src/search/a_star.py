@@ -28,7 +28,7 @@ from task import Task
 from multiprocessing import Process, SimpleQueue
 import copy
 
-NUM_AGENTS = 3
+NUM_AGENTS = 2
 
 
 def search_helper(task, heuristic, plans, use_relaxed_plan):
@@ -49,12 +49,19 @@ def ma_search(task, heuristic, use_relaxed_plan=False):
         t.join()
 
     sol = None
+    l = None
     i = 0
     while not plans.empty():
-        sol = plans.get()
-        logging.info('Plan length: %s' % len(sol))
-        _write_solution(sol, 'ma-R%s.sol' % i)
+        s = plans.get()
+        logging.info('Plan length: %s' % len(s))
+        _write_solution(s, 'ma-R%s.sol' % i)
         i += 1
+        if sol == None:
+            sol = s
+            l = len(s)
+        elif l > len(s):
+            sol = s
+            l = len(s)
 
     return sol
 

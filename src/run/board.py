@@ -9,6 +9,7 @@ class Board:
         self.blocked = Set()
         self.box = Set()
         self.box.add((1,1))
+        self.box.add((2,3))
         self.goal = Set()
         self.positions = self.getAllPositions(x,y)
     
@@ -62,7 +63,8 @@ class Board:
         return 'e'
         
     def update(self):
-        (blocked, box, goal) = self.getUpdates()
-        self.blocked = blocked
-        self.box = box
-        self.goal = goal
+        if not self.ip == None:
+            (blocked, box, goal) = self.getUpdates()
+            self.blocked = blocked
+            self.box = box
+            self.goal = goal

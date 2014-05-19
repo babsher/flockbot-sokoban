@@ -10,15 +10,16 @@ import signal
 
 stop = threading.Event()
 
-BIRD_IP = "tcp://10.0.0.104:4242"
+#BIRD_IP = "tcp://10.0.0.104:4242"
+BIRD_IP = None
 
 MAX_X = 3
-MAX_Y = 2
+MAX_Y = 5
 
 PLAN = False
 RUN_ROBOTS = True
 
-robotId = [0, 8]
+robotId = [0, 5]
 dirMap = {'dir-south': 's', 'dir-north': 'n', 'dir-west': 'w', 'dir-east':'e'}
 
 def getPos(m, g1, g2):
@@ -36,10 +37,10 @@ def getPlan(file):
     for line in open(file, 'r').readlines():
         m = move.match(line)
         if m:
-            out[int(m.group(1))].append(('move', getPos(m, 2, 3), getPos(m, 4, 5), dirMap[m.group(6)]))
+            out[int(m.group(1))-1].append(('move', getPos(m, 2, 3), getPos(m, 4, 5), dirMap[m.group(6)]))
         m = push.match(line)
         if m:
-            out[int(m.group(2))].append(('push', getPos(m, 3, 4), getPos(m, 5, 6), dirMap[m.group(9)]))
+            out[int(m.group(2))-1].append(('push', getPos(m, 3, 4), getPos(m, 5, 6), dirMap[m.group(9)]))
     return out
 
 def mainLoop(event):
@@ -58,6 +59,7 @@ def mainLoop(event):
                 while r.pos == None:
                     r.update()
                 print 'Robot {} starting at {}'.format(r.id, r.pos)
+                board.robots[r.pos[0]] = 'robot-{}'.format(r.id)
 
         # plan
         if PLAN:
@@ -66,14 +68,14 @@ def mainLoop(event):
             f = open('problem.pddl', 'w')
             f.write(pddl)
             f.close()
-            call(['/usr/local/bin/python3', './src/pyperplan.py', './domain.pddl', './problem.pddl', '-sastar'])
+            call(['/usr/local/bin/python3', './src/pyperplan.py', './domain.pddl', './problem.pddl', '-sma', '-Hhmax'])
 
         # Select parts for this robot
         plan = {}
         if PLAN:
             plan = getPlan('./problem.pddl.soln')
         else:
-            plan =  getPlan('./src/ma_1.pddl.soln')
+            plan =  getPlan('./src/demo.pddl.soln')
         print plan
 
         # while has steps not completed
